@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import BaseHeader from "./components/layouts/BaseHeader.vue";
-import HelloWorld from "./components/HelloWorld.vue";
+import BaseHeader from './components/layouts/BaseHeader.vue';
+import HelloWorld from './components/HelloWorld.vue';
 </script>
 
 <style>
@@ -17,6 +17,7 @@ import HelloWorld from "./components/HelloWorld.vue";
   text-align: center;
   color: #2c3e50;
 }
+
 .element-plus-logo {
   width: 50%;
 }
