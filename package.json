@@ -36,7 +36,8 @@
     "typescript": "^4.6.2",
     "unplugin-vue-components": "^0.17.21",
     "vite": "^2.8.6",
-    "vue-tsc": "^0.31.4"
+    "vue-tsc": "^0.31.4",
+    "yorkie": "^2.0.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -61,5 +62,8 @@
     "*.md": [
       "prettier --write"
     ]
+  },
+  "gitHooks": {
+    "pre-commit": "lint-staged"
   }
 }
