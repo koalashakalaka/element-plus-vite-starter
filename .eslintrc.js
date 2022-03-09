@@ -1,4 +1,10 @@
 module.exports = {
+  root: true,
+  env: {
+    browser: true,
+    node: true,
+    es6: true,
+  },
   // https://eslint.vuejs.org/user-guide/#usage
   // you have to use the parserOptions.parser option instead of the parser option.
   // Because this plugin requires vue-eslint-parser (opens new window)to parse .vue files,
