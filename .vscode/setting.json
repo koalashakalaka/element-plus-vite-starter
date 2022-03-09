@@ -1,0 +1,12 @@
+{
+  "volar.tsPlugin": true,
+  "volar.tsPluginStatus": false,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "stylelint.enable": true,
+  "stylelint.validate": ["css", "less", "scss", "sass", "postcss", "vue"],
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "eslint.validate": ["javascript", "vue", "typescript", "html"]
+}
