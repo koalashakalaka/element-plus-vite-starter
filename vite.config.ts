@@ -6,8 +6,10 @@ import vueJsx from '@vitejs/plugin-vue-jsx';
 // import legacy from '@vitejs/plugin-legacy';
 import vueSetupExtend from 'vite-plugin-vue-setup-extend';
 
+import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
+
 import { visualizer } from 'rollup-plugin-visualizer';
 
 const pathSrc = path.resolve(__dirname, 'src');
@@ -39,6 +41,10 @@ export default ({}: ConfigEnv): UserConfig => {
       vueJsx(),
       vueSetupExtend(),
       // legacy(),
+      AutoImport({
+        resolvers: [ElementPlusResolver()],
+        dts: path.resolve(pathSrc, 'auto-imports.d.ts'),
+      }),
       Components({
         resolvers: [
           ElementPlusResolver({
