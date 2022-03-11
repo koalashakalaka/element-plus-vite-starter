@@ -5,6 +5,7 @@ import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
 // import legacy from '@vitejs/plugin-legacy';
 import vueSetupExtend from 'vite-plugin-vue-setup-extend';
+import Pages from 'vite-plugin-pages';
 
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
@@ -22,11 +23,48 @@ export function isReportMode(): boolean {
 }
 
 // https://vitejs.dev/config/
-export default ({}: ConfigEnv): UserConfig => {
+export default ({ command }: ConfigEnv): UserConfig => {
+  const isBuild = command === 'build';
+
+  const plugins: UserConfig['plugins'] = [
+    vue(),
+    vueJsx(),
+    vueSetupExtend(),
+    Pages({
+      dirs: [{ dir: path.resolve(__dirname, './src/pages'), baseRoute: '' }],
+      extensions: ['vue'],
+    }),
+    // legacy(),
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+      dts: path.resolve(pathSrc, 'auto-imports.d.ts'),
+    }),
+    Components({
+      resolvers: [
+        ElementPlusResolver({
+          importStyle: 'sass',
+        }),
+      ],
+      dts: path.resolve(pathSrc, 'components.d.ts'),
+    }),
+  ];
+
+  isBuild &&
+    isReportMode() &&
+    plugins.push(
+      visualizer({
+        filename: './node_modules/.cache/visualizer/stats.html',
+        open: true,
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    );
+
   return {
     resolve: {
       alias: {
         '~/': `${pathSrc}/`,
+        vue: 'vue/dist/vue.esm-bundler.js',
       },
     },
     css: {
@@ -36,31 +74,6 @@ export default ({}: ConfigEnv): UserConfig => {
         },
       },
     },
-    plugins: [
-      vue(),
-      vueJsx(),
-      vueSetupExtend(),
-      // legacy(),
-      AutoImport({
-        resolvers: [ElementPlusResolver()],
-        dts: path.resolve(pathSrc, 'auto-imports.d.ts'),
-      }),
-      Components({
-        resolvers: [
-          ElementPlusResolver({
-            importStyle: 'sass',
-          }),
-        ],
-        dts: path.resolve(pathSrc, 'components.d.ts'),
-      }),
-      visualizer(
-        isReportMode() && {
-          filename: './node_modules/.cache/visualizer/stats.html',
-          open: true,
-          gzipSize: true,
-          brotliSize: true,
-        },
-      ),
-    ],
+    plugins,
   };
 };
