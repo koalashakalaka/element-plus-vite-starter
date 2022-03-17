@@ -35,5 +35,8 @@ module.exports = {
     // use plugin:prettier/recommended instead of eslint-config-prettier
     'plugin:prettier/recommended',
   ],
-  rules: {},
+  rules: {
+    '@typescript-eslint/no-explicit-any': 'off',
+    'vue/multi-word-component-names': 'warn',
+  },
 };

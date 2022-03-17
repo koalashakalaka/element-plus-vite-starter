@@ -1,19 +1,21 @@
 import path from 'path';
-import { ConfigEnv, UserConfig } from 'vite';
+import { ConfigEnv, UserConfig, loadEnv } from 'vite';
 
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
-// import legacy from '@vitejs/plugin-legacy';
+import legacy from '@vitejs/plugin-legacy';
 import vueSetupExtend from 'vite-plugin-vue-setup-extend';
+import { createHtmlPlugin } from 'vite-plugin-html';
 import Pages from 'vite-plugin-pages';
-
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers';
 
 import { visualizer } from 'rollup-plugin-visualizer';
 
-const pathSrc = path.resolve(__dirname, 'src');
+import { wrapperEnv, createProxy } from './build/utils';
+
+const srcPath = path.resolve(__dirname, 'src');
 
 /**
  * Whether to generate package preview
@@ -23,21 +25,33 @@ export function isReportMode(): boolean {
 }
 
 // https://vitejs.dev/config/
-export default ({ command }: ConfigEnv): UserConfig => {
+export default ({ command, mode }: ConfigEnv): UserConfig => {
   const isBuild = command === 'build';
+
+  const env = loadEnv(mode, process.cwd());
+
+  const { VITE_TITLE, VITE_HTTPS, VITE_PROXY, VITE_LEGACY } = wrapperEnv(env);
 
   const plugins: UserConfig['plugins'] = [
     vue(),
     vueJsx(),
     vueSetupExtend(),
+    createHtmlPlugin({
+      minify: isBuild,
+      inject: {
+        data: {
+          title: VITE_TITLE,
+        },
+      },
+    }),
     Pages({
-      dirs: [{ dir: path.resolve(__dirname, './src/pages'), baseRoute: '' }],
+      dirs: [{ dir: path.resolve(srcPath, 'pages'), baseRoute: '' }],
+      exclude: ['**/components/*.vue'],
       extensions: ['vue'],
     }),
-    // legacy(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
-      dts: path.resolve(pathSrc, 'auto-imports.d.ts'),
+      dts: path.resolve(srcPath, 'auto-imports.d.ts'),
     }),
     Components({
       resolvers: [
@@ -45,7 +59,7 @@ export default ({ command }: ConfigEnv): UserConfig => {
           importStyle: 'sass',
         }),
       ],
-      dts: path.resolve(pathSrc, 'components.d.ts'),
+      dts: path.resolve(srcPath, 'components.d.ts'),
     }),
   ];
 
@@ -60,10 +74,22 @@ export default ({ command }: ConfigEnv): UserConfig => {
       }),
     );
 
+  isBuild && VITE_LEGACY && plugins.push(legacy());
+
   return {
+    server: {
+      host: true,
+      https: VITE_HTTPS,
+      proxy: createProxy(VITE_PROXY),
+    },
+    build: {
+      target: 'es2015',
+      cssTarget: 'chrome80',
+      chunkSizeWarningLimit: 2000,
+    },
     resolve: {
       alias: {
-        '~/': `${pathSrc}/`,
+        '~/': `${srcPath}/`,
         vue: 'vue/dist/vue.esm-bundler.js',
       },
     },
