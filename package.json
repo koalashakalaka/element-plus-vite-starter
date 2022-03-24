@@ -14,15 +14,22 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "axios": "^0.26.1",
+    "downloadjs": "^1.4.7",
     "element-plus": "^2.1.4",
+    "lodash-es": "^4.17.21",
+    "path-to-regexp": "^6.2.0",
+    "qs": "^6.10.3",
     "vue": "^3.2.31",
     "vue-router": "^4.0.14"
   },
   "devDependencies": {
     "@commitlint/cli": "^16.2.3",
     "@commitlint/config-conventional": "^16.2.1",
+    "@types/downloadjs": "^1.4.3",
     "@types/lodash-es": "^4.17.6",
     "@types/node": "*",
+    "@types/qs": "^6.9.7",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
     "@vitejs/plugin-legacy": "^1.7.1",
