@@ -1,11 +1,12 @@
 import path from 'path';
-import { ConfigEnv, UserConfig, loadEnv } from 'vite';
+import type { ConfigEnv, UserConfig } from 'vite';
+import { loadEnv } from 'vite';
 
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
 import legacy from '@vitejs/plugin-legacy';
 import vueSetupExtend from 'vite-plugin-vue-setup-extend';
-import { createHtmlPlugin } from 'vite-plugin-html';
+// import { createHtmlPlugin } from 'vite-plugin-html';
 import Pages from 'vite-plugin-pages';
 import AutoImport from 'unplugin-auto-import/vite';
 import Components from 'unplugin-vue-components/vite';
@@ -25,7 +26,7 @@ export function isReportMode(): boolean {
 }
 
 // https://vitejs.dev/config/
-export default ({ command, mode }: ConfigEnv): UserConfig => {
+export default async ({ command, mode }: ConfigEnv): Promise<UserConfig> => {
   const isBuild = command === 'build';
 
   const env = loadEnv(mode, process.cwd());
@@ -36,14 +37,15 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
     vue(),
     vueJsx(),
     vueSetupExtend(),
-    createHtmlPlugin({
-      minify: isBuild,
-      inject: {
-        data: {
-          title: VITE_TITLE,
-        },
-      },
-    }),
+    // TODO: 这里开了会导致proxy失效
+    // createHtmlPlugin({
+    //   minify: isBuild,
+    //   inject: {
+    //     data: {
+    //       title: VITE_TITLE,
+    //     },
+    //   },
+    // }),
     Pages({
       dirs: [{ dir: path.resolve(srcPath, 'pages'), baseRoute: '' }],
       exclude: ['**/components/*.vue'],
@@ -77,11 +79,6 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
   isBuild && VITE_LEGACY && plugins.push(legacy());
 
   return {
-    server: {
-      host: true,
-      https: VITE_HTTPS,
-      proxy: createProxy(VITE_PROXY),
-    },
     build: {
       target: 'es2015',
       cssTarget: 'chrome80',
@@ -101,5 +98,11 @@ export default ({ command, mode }: ConfigEnv): UserConfig => {
       },
     },
     plugins,
+    server: {
+      host: true,
+      https: VITE_HTTPS,
+      cors: true,
+      proxy: createProxy(VITE_PROXY),
+    },
   };
 };

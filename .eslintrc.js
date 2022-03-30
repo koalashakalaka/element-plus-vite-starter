@@ -36,7 +36,9 @@ module.exports = {
     'plugin:prettier/recommended',
   ],
   rules: {
-    '@typescript-eslint/no-explicit-any': 'off',
     'vue/multi-word-component-names': 'warn',
+    '@typescript-eslint/consistent-type-imports': 'warn',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-non-null-assertion': 'off',
   },
 };

@@ -4,14 +4,13 @@
 
 declare module 'vue' {
   export interface GlobalComponents {
-    BaseHeader: typeof import('./components/layouts/BaseHeader.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
+    ElButton: typeof import('element-plus/es')['ElButton']
     ElConfigProvider: typeof import('element-plus/es')['ElConfigProvider']
     ElContainer: typeof import('element-plus/es')['ElContainer']
     ElFooter: typeof import('element-plus/es')['ElFooter']
     ElHeader: typeof import('element-plus/es')['ElHeader']
     ElMain: typeof import('element-plus/es')['ElMain']
-    HelloWorld: typeof import('./components/HelloWorld.vue')['default']
   }
 }
 
