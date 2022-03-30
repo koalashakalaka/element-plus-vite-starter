@@ -1,7 +1,9 @@
+/**
+ * 后台标准返回格式
+ */
 declare type RequexResponse =
   | {
-      data?: any;
-      msg?: string;
-      code?: string;
+      message?: string;
+      success?: boolean;
     }
   | undefined;

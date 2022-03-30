@@ -5,6 +5,7 @@ import { cloneDeep } from 'lodash-es';
 import download from 'downloadjs';
 import { parse, compile } from 'path-to-regexp';
 import { isFunction } from '~/utils/is';
+import { AxiosCanceler } from './axiosCancel';
 import { ContentTypeEnum, RequestEnum } from './types';
 import type { Result, Options, Params } from './types';
 // import { AxiosCanceler } from './axiosCancel';
@@ -14,19 +15,37 @@ export class Requex<T = any> {
   private readonly options: Options;
   private readonly params?: Params;
 
-  constructor(options: Options, params?: Params, customizeInstance?: (instance: AxiosInstance) => void) {
+  constructor(options: Options<T>, params?: Params<T>, customizeInstance?: (instance: AxiosInstance) => void) {
     this.options = options;
     this.params = params;
     this.axiosInstance = axios.create(options);
+    this.setupInterceptors();
     if (isFunction(customizeInstance)) {
       customizeInstance(this.axiosInstance);
     }
   }
 
   /**
+   * @description 添加默认的interceptors, 比如cancel
+   */
+  setupInterceptors() {
+    const axiosCanceler = new AxiosCanceler();
+
+    this.axiosInstance.interceptors.request.use((config) => {
+      axiosCanceler.addPending(config);
+      return config;
+    });
+
+    this.axiosInstance.interceptors.response.use((res) => {
+      res && axiosCanceler.removePending(res.config);
+      return res;
+    });
+  }
+
+  /**
    * @description URL转换逻辑，包括模板替换
    */
-  transformURL(options: Options) {
+  private transformURL(options: Options) {
     let url = options.url || '';
     let data = options.data;
     let domain = '';
@@ -59,11 +78,10 @@ export class Requex<T = any> {
   /**
    * @description Data转换逻辑
    */
-  transformData(options: Options) {
+  private transformData(options: Options) {
     const headers = options.headers;
-    const contentType = headers?.['Content-Type'] || headers?.['content-type'];
 
-    if (options.upload) {
+    if (options.contentType === 'FORM_DATA' && options.method?.toLocaleUpperCase() !== RequestEnum.GET) {
       const formData = new window.FormData();
 
       if (options.data) {
@@ -71,7 +89,7 @@ export class Requex<T = any> {
           const value = options.data![key];
           if (Array.isArray(value)) {
             value.forEach((item) => {
-              formData.append(`${key}[]`, item);
+              formData.append(key, item);
             });
             return;
           }
@@ -85,11 +103,12 @@ export class Requex<T = any> {
     }
 
     if (
-      contentType === ContentTypeEnum.FORM_URLENCODED &&
+      options.contentType === 'FORM_URLENCODED' &&
       Reflect.has(options, 'data') &&
       options.method?.toUpperCase() !== RequestEnum.GET
     ) {
       options.data = qs.stringify(options.data, { arrayFormat: 'brackets' });
+      headers!['content-type'] = ContentTypeEnum.FORM_URLENCODED;
     }
 
     if (Reflect.has(options, 'data') && options.method?.toUpperCase() === 'GET') {
@@ -101,7 +120,7 @@ export class Requex<T = any> {
   /**
    * @description 请求后流程
    */
-  afterResponse<R = T>(res: AxiosResponse<R>, options: Options): Result<R> {
+  private afterResponse<R = T>(res: AxiosResponse<R>, options: Options): Result<R> {
     const { data, status } = res;
 
     if (!data) {
@@ -185,6 +204,19 @@ export class Requex<T = any> {
 
       return ret;
     } catch (e) {
+      if (e instanceof axios.Cancel) {
+        const status = '(canceled)';
+
+        if (isFunction(params?.onFail)) {
+          params?.onFail({}, status, options);
+        }
+
+        return {
+          success: false,
+          status,
+        };
+      }
+
       if (axios.isAxiosError(e)) {
         // rewrite error message from axios in here
         const { response } = e as AxiosError<R>;
@@ -195,12 +227,13 @@ export class Requex<T = any> {
 
         if (isFunction(params?.onFail)) {
           params?.onFail(response.data, response.status, options);
-          return {
-            success: false,
-            data: response.data,
-            status: response.status,
-          };
         }
+
+        return {
+          success: false,
+          data: response.data,
+          status: response.status,
+        };
       }
 
       throw e;

@@ -1,10 +1,12 @@
 import type { AxiosRequestConfig } from 'axios';
 
+type Status = number | '(canceled)';
+
 /**
  * @description 请求回调方法
  */
 interface CallbackFn<T> {
-  (response: T, status: number, config: AxiosRequestConfig<T>): void;
+  (response: T, status: Status, config: AxiosRequestConfig<T>): void;
 }
 
 /**
@@ -20,18 +22,26 @@ export interface Options<R = any, D = any> extends AxiosRequestConfig<D> {
    */
   showSpin?: boolean;
   /**
-   * 是否是文件上传
+   * content-type 会基于类型做options.data的转换
    */
-  upload?: boolean;
+  contentType?: 'JSON' | 'FORM_URLENCODED' | 'FORM_DATA';
 }
 
 /**
  * @description 请求拓展参数
  */
 export interface Params<R = any, D = any> {
+  /**
+   * 请求成功回调
+   */
   onSuccess?: CallbackFn<R>;
-  // 请求失败回调
+  /**
+   * 请求失败回调
+   */
   onFail?: CallbackFn<R>;
+  /**
+   * 请求参数，和options.data相同。可用于GET或者POST
+   */
   extraData?: D;
 }
 
@@ -46,7 +56,7 @@ export interface Result<T = any> {
   /**
    * HTTP返回码
    */
-  status: number;
+  status: Status;
   /**
    * 接口返回体
    */

@@ -1,5 +1,7 @@
+import { ElMessage, ElNotification } from 'element-plus';
 import { Requex } from './axios';
 import { ContentTypeEnum } from './types';
+import type { Options } from './types';
 
 const codeMessage: Record<string, string> = {
   200: '服务器成功返回请求的数据。',
@@ -17,6 +19,7 @@ const codeMessage: Record<string, string> = {
   502: '网关错误。',
   503: '服务不可用，服务器暂时过载或维护。',
   504: '网关超时。',
+  '(canceled)': '重复请求被关闭。',
 };
 
 /**
@@ -24,6 +27,7 @@ const codeMessage: Record<string, string> = {
  */
 const instance = new Requex<RequexResponse>(
   {
+    baseURL: (import.meta.env.VITE_API_URL || '/') as string,
     withCredentials: true,
     headers: {
       Accept: 'application/json',
@@ -31,28 +35,35 @@ const instance = new Requex<RequexResponse>(
       'Content-Type': ContentTypeEnum.JSON,
     },
     isSuccess: (response) => {
-      return response?.code === undefined ? false : ['200100', '200000'].includes(response.code);
+      return response?.success === true;
     },
   },
   {
     onSuccess: (response) => {
-      if (response?.msg) {
-        console.log(response.msg);
+      if (response?.message) {
+        ElMessage.success(response.message);
       }
     },
     onFail: (response, status, { url }) => {
-      if (status === 401) {
+      console.log('response', response);
+      if ([401, 403].includes(status as number)) {
         const currHref = window.location.href;
-        console.log(currHref);
+        window.location.href = `${import.meta.env.VITE_API_URL}/me?redirect_uri=${encodeURIComponent(currHref)}`;
       } else if (status >= 200 && status < 300) {
-        if (response?.msg) {
-          console.log(response.msg);
+        if (response?.message) {
+          ElMessage.error(response.message);
         }
       } else {
-        console.log(response.msg);
+        ElNotification({
+          title: `请求错误 ${status}: ${url}`,
+          message: codeMessage[String(status)],
+          type: 'error',
+        });
       }
     },
   },
 );
+
+export { Options };
 
 export default instance;
